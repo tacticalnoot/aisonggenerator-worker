@@ -2,6 +2,12 @@
 
 interface Env {
 	KV: KVNamespace;
+	USER_AGENT: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36";
+	SUNO_BASE_URL: "https://studio-api.prod.suno.com";
+	CLERK_BASE_URL: "https://clerk.suno.com";
+	CLERK_JS_VERSION: "5.52.2";
+	CLERK_API_VERSION: "2024-10-01";
+	DOC_COOKIE: string;
 	SUNO_COOKIE: string;
 	TWOCAPTCHA_API_KEY: string;
 	BROWSER: Fetcher;
