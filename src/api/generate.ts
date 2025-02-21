@@ -21,7 +21,7 @@ export async function generate(req: Request, env: Env, ctx: ExecutionContext) {
         if (
             !body.title
             || !body.prompt
-            || !body.tags
+            || body.tags.length < 2
         ) {
             throw new Error('Missing required fields');
         }

@@ -17,8 +17,6 @@ const router = IttyRouter()
 // https://mubert.com/
 // https://deepai.org/music
 
-// TODO all songs beings generated are triggered as fake
-
 router
     .options('*', preflight)
     .all('*', withParams)
