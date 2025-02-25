@@ -1,22 +1,21 @@
-import { json } from "itty-router";
-import { Baker } from "../baker";
-import { Clerk } from "../clerk";
-import { getClient } from "../client";
-import { Suno } from "../suno";
+// https://lyrics-generator.tommy-ni1997.workers.dev
+// https://aisonggenerator.io/api/lyrics-generate
 
-export async function lyrics(req: Request, env: Env, ctx: ExecutionContext) {
-    // TODO Support lyrics model
-    
-    const body = await req.json<{ 
-        prompt: string
-    }>();
+import { fetcher } from "itty-fetcher";
+import { json, RequestLike } from "itty-router";
 
-    const baker = new Baker(env);
-    const client = await getClient(env, baker);
-    const clerk = await Clerk.create(env, client, baker);
-    const suno = new Suno(env, client, clerk);
+const aisonggenerator = fetcher({ base: 'https://lyrics-generator.tommy-ni1997.workers.dev' });
 
-    const get_res = await suno.lyrics(body.prompt);
+export async function lyrics(req: RequestLike) {
+    const body = await req.json()
+    const lyrics: LyricsResponse = await aisonggenerator
+        .post('/', body)
+        .then((res: any) => {
+            return {
+                ...res,
+                style: res.style.split(', ')
+            }
+        })
 
-    return json(get_res.data);
+    return json(lyrics)
 }

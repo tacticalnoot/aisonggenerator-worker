@@ -7,60 +7,89 @@
   "name": "suno-worker",
   "main": "src/index.ts",
   "compatibility_date": "2025-02-14",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  // "compatibility_flags": [
+  //   "nodejs_compat"
+  // ],
   "observability": {
     "enabled": true
   },
+  // "rules": [
+  //   {
+  //     "type": "Text",
+  //     "globs": [
+  //       "./assets/*.txt"
+  //     ],
+  //     "fallthrough": true
+  //   }
+  // ],
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
    */
-  // "placement": { "mode": "smart" },
-
+  "placement": {
+    "mode": "smart"
+  },
   /**
    * Bindings
    * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
    * databases, object storage, AI inference, real-time communication and more.
    * https://developers.cloudflare.com/workers/runtime-apis/bindings/
    */
-  "kv_namespaces": [
-    {
-      "binding": "KV",
-      "id": "c76ea05d52fe4158a0d763a9f6af4846",
-      "preview_id": "c76ea05d52fe4158a0d763a9f6af4846"
-    }
-  ],
-
+  // "kv_namespaces": [
+  //   {
+  //     "binding": "KV",
+  //     "id": "c76ea05d52fe4158a0d763a9f6af4846",
+  //     "preview_id": "c76ea05d52fe4158a0d763a9f6af4846"
+  //   }
+  // ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "DURABLE_OBJECT",
+        "class_name": "DO"
+      }
+    ]
+  },
+  "triggers": {
+    "crons": [
+      "* * * * *"
+    ]
+  },
   /**
    * Environment Variables
    * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
    */
-  "vars": {
-    "USER_AGENT": "suno/8 CFNetwork/3826.400.120 Darwin/24.3.0",
-    "SUNO_BASE_URL": "https://studio-api.prod.suno.com",
-    "CLERK_BASE_URL": "https://clerk.suno.com",
-    "CLERK_JS_VERSION": "4.70.0",
-    "CLERK_API_VERSION": "2021-02-05"
-  },
+  // "vars": {
+  // "USER_AGENT": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+  // "SUNO_BASE_URL": "https://studio-api.prod.suno.com",
+  // "CLERK_BASE_URL": "https://clerk.suno.com",
+  // "CLERK_JS_VERSION": "5.52.2",
+  // "CLERK_API_VERSION": "2024-10-01",
+  // "RIFFUSION_BASE_URL": "https://api.riffusion.com",
+  // },
   /**
    * Note: Use secrets to store sensitive data.
    * https://developers.cloudflare.com/workers/configuration/secrets/
    */
-
   /**
    * Static Assets
    * https://developers.cloudflare.com/workers/static-assets/binding/
    */
-  // "assets": { "directory": "./public/", "binding": "ASSETS" },
-
+  // "assets": { "directory": "./assets/", "binding": "ASSETS" },
   /**
    * Service Bindings (communicate between multiple Workers)
    * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
    */
   // "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
-  "browser": {
-    "binding": "BROWSER"
-  }
+  // "browser": {
+  //   "binding": "BROWSER"
+  // },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": [
+        "DO"
+      ]
+    }
+  ]
 }

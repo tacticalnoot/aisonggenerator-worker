@@ -1,43 +1,42 @@
-import { cors, error, IttyRouter, withParams } from "itty-router";
-import { generate } from "./api/generate";
-import { get } from "./api/get";
-import { lyrics } from "./api/lyrics";
+import { IttyRouter, text, cors, withParams, json, status, error } from 'itty-router'
+import { lyrics } from './api/lyrics';
+import { getSongs, postSongs } from './api/songs';
+
+export { DO } from "./do";
 
 const { preflight, corsify } = cors()
 const router = IttyRouter()
 
-// TODO try other services:
-// https://www.mureka.ai/
-// https://www.riffusion.com/
-// https://aitubo.ai/
-// https://www.trymusicflow.com/
-// https://soundraw.io/
-// https://www.udio.com/
-// https://aisonggenerator.io/
-// https://mubert.com/
-// https://deepai.org/music
-
 router
     .options('*', preflight)
     .all('*', withParams)
-    .get('/api/get', get)
     .post('/api/lyrics', lyrics)
-    .post('/api/generate', generate)
-    .all('*', () => error(404))
+    .get('/api/songs', getSongs)
+    .post('/api/songs', postSongs)
+    // .get('/', async (req: Request, env: Env, ctx: ExecutionContext) => {
+    //     const doid = env.DURABLE_OBJECT.idFromName('v0.0.0');
+    //     const stub = env.DURABLE_OBJECT.get(doid);
+    //     const token = await stub.getToken();
+
+    //     return text(token);
+    // })
+    // .get('/api/get', get)
+    // .post('/api/lyrics', lyrics)
+    // .post('/api/generate', generate)
+    .all('*', () => status(404))
 
 const handler = {
     fetch: (req: Request, env: Env, ctx: ExecutionContext) =>
         router
             .fetch(req, env, ctx)
-            .catch((err) => error(
-                typeof err?.status === 'number' ? err.status : 400,
-                err instanceof Error
-                    ? err?.message || err
-                    : err
-            ))
-            .then((r) => corsify(r, req)),
+            .catch(error)
+            .then((res: Response) => corsify(res, req)),
+    
+    async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+        const doid = env.DURABLE_OBJECT.idFromName('v0.0.0');
+        const stub = env.DURABLE_OBJECT.get(doid);
+        const token = await stub.getToken();
+    }
 } satisfies ExportedHandler<Env>;
 
-export {
-    handler as default
-}
+export default { ...handler }
