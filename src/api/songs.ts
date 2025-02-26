@@ -41,8 +41,16 @@ export async function postSongs(req: RequestLike, env: Env) {
         is_private: false
     }
 
+    const doid = env.DURABLE_OBJECT.idFromName('v0.0.0');
+    const stub = env.DURABLE_OBJECT.get(doid);
+    const { access_token, refresh_token } = await stub.getTokens();
+
     const res = await aisonggenerator
-        .post('/api/song', body)
+        .post('/api/song', body, {
+            headers: {
+                Cookie: `sb-hjgeamyjogwwmvjydbfm-auth-token=${encodeURIComponent(`'["${access_token}","${refresh_token}",null,null,null]'`)}`
+            }
+        })
         .then((res: any) => {
             if (
                 res.success 
@@ -50,6 +58,10 @@ export async function postSongs(req: RequestLike, env: Env) {
                 && res.data?.length > 0
             ) {
                 return res.data
+            } else if (res.data?.taskId) {
+                return [res.data.taskId]
+            } else {
+                throw res
             }
         })
 

@@ -12,7 +12,7 @@ export class DO extends DurableObject<Env> {
         });
     }
 
-    async getToken() {
+    async getTokens() {
         const expires_at = await this.ctx.storage.get<number>('expires_at');
         const five_minutes_in_ms = 5 * 60 * 1000;
 
@@ -23,7 +23,10 @@ export class DO extends DurableObject<Env> {
             await this.refreshToken();
         }
 
-        return this.ctx.storage.get<string>('access_token');
+        return {
+            access_token: await this.ctx.storage.get<string>('access_token'),
+            refresh_token: await this.ctx.storage.get<string>('refresh_token'),
+        }
     }
 
     private async refreshToken() {
@@ -35,8 +38,6 @@ export class DO extends DurableObject<Env> {
             }
         })
         .then(async (res: any) => {
-            console.log(res);
-            
             await this.ctx.storage.put<string>('access_token', res.access_token);
             await this.ctx.storage.put<string>('refresh_token', res.refresh_token);
             await this.ctx.storage.put<number>('expires_at', res.expires_at);

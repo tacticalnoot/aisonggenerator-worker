@@ -19,13 +19,17 @@ const handler = {
     fetch: (req: Request, env: Env, ctx: ExecutionContext) =>
         router
             .fetch(req, env, ctx)
-            .catch(error)
+            .catch((err: any) => {
+                console.error(err);
+                return error(err?.status ?? 400, err)
+            })
             .then((res: Response) => corsify(res, req)),
     
     async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
         const doid = env.DURABLE_OBJECT.idFromName('v0.0.0');
         const stub = env.DURABLE_OBJECT.get(doid);
-        const token = await stub.getToken();
+        
+        await stub.getTokens();
     }
 } satisfies ExportedHandler<Env>;
 
