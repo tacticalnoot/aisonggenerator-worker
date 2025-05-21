@@ -64,11 +64,11 @@ export async function postSongs(ctx: Context<{ Bindings: Env }>) {
     //     "is_private": false
     // }
 
-    const body = {
+    let body = {
         lyrics_mode: true,
-        instrumental: data.instrumental === true ? true : false,
-        lyrics: data.lyrics,
-        // description: "",
+        instrumental: false,
+        lyrics: "",
+        description: "",
         title: data.title,
         styles: data.style.join(', '),
         // style_negative: "",
@@ -78,6 +78,23 @@ export async function postSongs(ctx: Context<{ Bindings: Env }>) {
         // user_email: "",
         is_private: data.public === false ? true : false,
     }
+
+    if (data.instrumental) {
+        body.lyrics_mode = false;
+        body.instrumental = true;
+        body.description = `
+            # Prompt
+            ${data.prompt}
+            
+            # Description
+            ${data.description}
+        `;
+        body.type = "desc";
+    } else {
+        body.lyrics = data.lyrics;
+    }
+
+    console.log(body);
 
     const doid = env.DURABLE_OBJECT.idFromName('v0.0.0');
     const stub = env.DURABLE_OBJECT.get(doid);
@@ -98,6 +115,8 @@ export async function postSongs(ctx: Context<{ Bindings: Env }>) {
             throw new HTTPException(400, { res: ctx.json(await res.text(), 400) });
         })
         .then((res) => {
+            console.log(res);
+
             if (res?.task_id) {
                 return [res.task_id]
             } else if (res?.data?.taskId) {
