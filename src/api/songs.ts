@@ -94,8 +94,6 @@ export async function postSongs(ctx: Context<{ Bindings: Env }>) {
         body.lyrics = data.lyrics;
     }
 
-    console.log(body);
-
     const doid = env.DURABLE_OBJECT.idFromName('v0.0.0');
     const stub = env.DURABLE_OBJECT.get(doid);
     const { access_token, refresh_token } = await stub.getTokens();
@@ -115,8 +113,6 @@ export async function postSongs(ctx: Context<{ Bindings: Env }>) {
             throw new HTTPException(400, { res: ctx.json(await res.text(), 400) });
         })
         .then((res) => {
-            console.log(res);
-
             if (res?.task_id) {
                 return [res.task_id]
             } else if (res?.data?.taskId) {

@@ -24,7 +24,6 @@ export class DO extends DurableObject<Env> {
             ) {
                 try {
                     this.refreshing = true;
-                    console.log('Refreshing token');
                     await this.refreshToken();
                 } catch (err) {
                     return { error: err };
