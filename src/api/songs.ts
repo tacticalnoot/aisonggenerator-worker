@@ -79,16 +79,22 @@ export async function postSongs(ctx: Context<{ Bindings: Env }>) {
         is_private: data.public === false ? true : false,
     }
 
+    // TODO I think the description mode context length is much shorter than the lyrics mode 
+    // but has a higher chance of producing a song without lyrics
+    // likely need to trim down the prompt to whatever the context length is (which I have no idea about)
+    // if we do that it get's a little dicey because most style prompts come at the end of the prompt
+    // and we don't want to lose that
     if (data.instrumental) {
         body.lyrics_mode = false;
         body.instrumental = true;
-        body.description = `
-            # Prompt
-            ${data.prompt}
+        body.description = data.prompt;
+        // body.description = `
+        //     # Prompt
+        //     ${data.prompt}
             
-            # Description
-            ${data.description}
-        `;
+        //     # Description
+        //     ${data.description}
+        // `;
         body.type = "desc";
     } else {
         body.lyrics = data.lyrics;

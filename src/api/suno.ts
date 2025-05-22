@@ -76,10 +76,10 @@ export async function getLyrics(prompt?: string): Promise<LyricsStatusResponse> 
             });
 
             if (!response.ok) {
-                console.warn(`Polling attempt ${attempts} failed: ${response.statusText}`);
                 if (attempts >= maxAttempts) {
                     throw new Error(`Failed to get lyrics after ${maxAttempts} attempts. Last status: ${response.statusText}`);
                 }
+
                 continue; 
             }
 
@@ -90,12 +90,7 @@ export async function getLyrics(prompt?: string): Promise<LyricsStatusResponse> 
             } else if (data.status === 'error' || data.status === 'failed') {
                 throw new Error(`Lyric generation failed: ${data.error_message || 'Unknown error'}`);
             }
-            // If status is 'streaming' or 'submitted' or 'processing', continue polling.
-            console.log(`Polling attempt ${attempts}: status is ${data.status}`);
-
-
         } catch (error) {
-            console.error(`Error during polling attempt ${attempts}:`, error);
             if (attempts >= maxAttempts) {
                 if (error instanceof Error) {
                      throw new Error(`Failed to get lyrics after ${maxAttempts} attempts. Last error: ${error.message}`);

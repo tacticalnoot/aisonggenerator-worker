@@ -45,6 +45,9 @@
   //     "preview_id": "c76ea05d52fe4158a0d763a9f6af4846"
   //   }
   // ],
+  "ai": {
+    "binding": "AI"
+  },
   "durable_objects": {
     "bindings": [
       {

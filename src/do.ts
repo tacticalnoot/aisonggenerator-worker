@@ -25,14 +25,15 @@ export class DO extends DurableObject<Env> {
                 try {
                     this.refreshing = true;
                     await this.refreshToken();
+                    console.log('Token refreshed');
                 } catch (err) {
                     return { error: err };
                 } finally {
                     this.refreshing = false;
                 }
             } else {
-                const secondsRemaining = Math.floor(((expires_at * 1000) - (now + ten_minutes_in_ms)) / 1000);
-                console.log('Token is still valid, seconds remaining:', secondsRemaining.toLocaleString());
+                // const secondsRemaining = Math.floor(((expires_at * 1000) - (now + ten_minutes_in_ms)) / 1000);
+                // console.log('Token is still valid, seconds remaining:', secondsRemaining.toLocaleString());
             }
         }
         
