@@ -20,7 +20,6 @@ export interface DiffRhythmGenerateParams {
     description?: string; // For instrumental mode or custom lyrical mode
     userId?: string;
     fingerprint?: string;
-    customMode?: boolean; // Advanced: true for lyrics by default, false for instrumental by default in examples
 }
 
 // Request body for Diffrhythm's handleNewV2 endpoint
@@ -74,6 +73,7 @@ export interface TransformedSong {
     music_id: string;
     status: number; // 4 if audio URL exists, 0 otherwise (as per user spec for this transformation)
     audio: string | null;
+    service: 'diffrhythm'; // Added service field
 }
 
 // --- Helper Functions ---
@@ -90,25 +90,28 @@ function extractMusicIdFromUrl(url: string): string {
     }
 }
 
-
 // --- Exported API Functions ---
 
 /**
  * Generates a song (lyrical or instrumental) using the Diffrhythm API.
  */
-export async function generateDiffRhythmSong(params: DiffRhythmGenerateParams): Promise<string> {
+export async function generateDiffRhythmSong(params: DiffRhythmGenerateParams, env: Env): Promise<string> {
     const cfToken = await getCaptchaToken();
     const userId = params.userId || DEFAULT_USER_ID;
     const fingerprint = params.fingerprint || DEFAULT_FINGERPRINT;
+
+    const doid = env.DURABLE_OBJECT.idFromName('v0.0.0');
+    const stub = env.DURABLE_OBJECT.get(doid);
+    const sessionToken = await stub.getDiffrhythmSession();
 
     let requestBody: DiffRhythmGenerateRequestBody;
 
     if (params.instrumental) {
         requestBody = {
-            custom_mode: params.customMode === undefined ? false : params.customMode,
+            custom_mode: true,
             instrumental: true,
-            input_description: params.description || "",
-            input_text: "", // Instrumental has no input_text
+            input_description: "",
+            input_text: params.description || "",
             input_title: params.title,
             input_tags: params.tags,
             user_id: userId,
@@ -118,9 +121,9 @@ export async function generateDiffRhythmSong(params: DiffRhythmGenerateParams): 
         };
     } else {
         requestBody = {
-            custom_mode: params.customMode === undefined ? true : params.customMode,
+            custom_mode: true,
             instrumental: false,
-            input_description: params.customMode ? (params.description || "") : "", // Description only if custom_mode for lyrics
+            input_description: "",
             input_text: params.lyrics || "",
             input_title: params.title,
             input_tags: params.tags,
@@ -135,7 +138,7 @@ export async function generateDiffRhythmSong(params: DiffRhythmGenerateParams): 
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            // Add any other necessary headers, e.g., Authorization if required by Diffrhythm
+            ...(typeof sessionToken === 'string' && sessionToken ? { "Cookie": sessionToken } : {}),
         },
         body: JSON.stringify(requestBody),
     });
@@ -159,11 +162,16 @@ export async function generateDiffRhythmSong(params: DiffRhythmGenerateParams): 
 /**
  * Retrieves generated songs from Diffrhythm and transforms them into the specified format.
  */
-export async function getDiffRhythmSongResults(uids: string[], userId?: string): Promise<TransformedSong[]> {
+export async function getDiffRhythmSongResults(uids: string[], env: Env, userId?: string): Promise<TransformedSong[]> {
     if (!uids || uids.length === 0) {
         return [];
     }
 
+    const doid = env.DURABLE_OBJECT.idFromName('v0.0.0');
+    const stub = env.DURABLE_OBJECT.get(doid);
+    const sessionToken = await stub.getDiffrhythmSession();
+
+    // Prioritize userId argument, then internal default
     const currentUserId = userId || DEFAULT_USER_ID;
 
     const requestBody: DiffRhythmGetWorksRequestBody = {
@@ -176,7 +184,7 @@ export async function getDiffRhythmSongResults(uids: string[], userId?: string):
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            // Add any other necessary headers
+            ...(typeof sessionToken === 'string' && sessionToken ? { "Cookie": sessionToken } : {}),
         },
         body: JSON.stringify(requestBody),
     });
@@ -193,11 +201,11 @@ export async function getDiffRhythmSongResults(uids: string[], userId?: string):
         // Diffrhythm API's own status field indicates an issue, or data is missing
         console.error("Diffrhythm get works API returned an error status or no data:", result);
         if (result.data === null && result.status === 0) { // API might return empty data legitimately
-             return [];
+            return [];
         }
         throw new Error(`Diffrhythm API error when fetching works: ${JSON.stringify(result.error) || 'Non-zero status or missing data'}`);
     }
-    
+
     const transformedSongs: TransformedSong[] = [];
 
     for (const work of result.data) {
@@ -210,6 +218,7 @@ export async function getDiffRhythmSongResults(uids: string[], userId?: string):
                             music_id: musicId,
                             status: 4, // Status 4 if audio URL exists
                             audio: audioUrl,
+                            service: 'diffrhythm' as const, // Added service field
                         });
                     }
                 }
@@ -217,7 +226,7 @@ export async function getDiffRhythmSongResults(uids: string[], userId?: string):
         }
         // If output_audio_url is empty or null for a work, it contributes no entries, per requirement.
     }
-    
+
     // "if `output_audio_url` is empty just return an empty array."
     // This condition seems to apply if *all* works result in no audio URLs,
     // or if the initial uids list was for works that don't produce output_audio_urls.
@@ -226,52 +235,3 @@ export async function getDiffRhythmSongResults(uids: string[], userId?: string):
 
     return transformedSongs;
 }
-
-// Example of how you might use these (optional, for testing):
-/*
-async function testDiffrhythmWorkflow() {
-    try {
-        console.log("Generating lyrical song...");
-        const lyricalParams: DiffRhythmGenerateParams = {
-            title: "My Lyrical Song",
-            tags: "Pop, Upbeat",
-            instrumental: false,
-            lyrics: "[Verse 1]
-This is my song,
-I sing it all day long.",
-            isPublic: false,
-        };
-        const lyricalUid = await generateDiffRhythmSong(lyricalParams);
-        console.log("Lyrical song UID:", lyricalUid);
-
-        console.log("\nGenerating instrumental song...");
-        const instrumentalParams: DiffRhythmGenerateParams = {
-            title: "My Instrumental Track",
-            tags: "Ambient, Chill",
-            instrumental: true,
-            description: "A calm and relaxing instrumental piece with soft pianos and strings.",
-            isPublic: false,
-        };
-        const instrumentalUid = await generateDiffRhythmSong(instrumentalParams);
-        console.log("Instrumental song UID:", instrumentalUid);
-        
-        // Wait for a bit for processing (Diffrhythm might take time)
-        console.log("\nWaiting for 30 seconds before fetching results...");
-        await new Promise(resolve => setTimeout(resolve, 30000));
-
-        console.log("\nFetching song results for UIDs:", [lyricalUid, instrumentalUid]);
-        const songs = await getDiffRhythmSongResults([lyricalUid, instrumentalUid]);
-        console.log("Transformed Song Results:", JSON.stringify(songs, null, 2));
-
-        if (songs.length === 0) {
-            console.log("No songs with audio URLs found. This might be normal if processing is not complete or if there were issues.");
-        }
-
-    } catch (error) {
-        console.error("\nError in Diffrhythm workflow test:", error instanceof Error ? error.message : String(error));
-    }
-}
-
-// To run the test:
-// testDiffrhythmWorkflow();
-*/

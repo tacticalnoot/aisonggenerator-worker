@@ -33,14 +33,22 @@ export default {
 
         try {
             await getClerkToken();
-        } catch (error) {
-            console.error('SUNO ERROR', error);
+        } catch (e: any) {
+            console.error("Error refreshing Suno session during scheduled task:", e.message);
         }
 
-        const { error } = await stub.getTokens(true);
+        // Refresh AISG token
+        try {
+            await stub.getTokens(true);
+        } catch (e: any) {
+            console.error("Error or Exception during AISG token refresh in scheduled task:", e.message);
+        }
 
-        if (error) {
-            console.error(error)
+        // Refresh Diffrhythm session token
+        try {
+            await stub.getDiffrhythmSession(true);
+        } catch (e: any) {
+            console.error("Error refreshing Diffrhythm session during scheduled task:", e.message);
         }
     },
 }
