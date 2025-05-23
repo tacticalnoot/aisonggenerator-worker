@@ -24,9 +24,12 @@ You MUST format your response as a valid JSON object strictly adhering to this f
         },
     ];
 
+    // @cf/meta/llama-4-scout-17b-16e-instruct
+    // @cf/mistralai/mistral-small-3.1-24b-instruct
+    // https://chatgpt.com/share/682fdc8b-83c0-800f-b010-0c86a5b4b9ac
     return env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { 
         messages,
-        max_tokens: 1024,
+        max_tokens: 512,
         temperature: 0.7,
     });
 }

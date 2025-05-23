@@ -52,6 +52,7 @@ export async function lyrics(ctx: Context<{ Bindings: Env }>) {
         console.warn("Failed to fetch from tommy-ni1997, trying next service:", error);
     }
 
+    // TODO consider dropping this service as it feels fragile. Rate limits, hard coded session id, etc.
     // Attempt 2: Suno getLyrics
     try {
         const sunoResponse: LyricsStatusResponse = await getSunoLyrics(prompt); // Pass the prompt to Suno

@@ -87,7 +87,8 @@ export async function postSongs(ctx: Context<{ Bindings: Env }>) {
     if (data.instrumental) {
         body.lyrics_mode = false;
         body.instrumental = true;
-        body.description = data.prompt;
+        // Ensure description doesn't exceed max length for API
+        body.description = data.prompt.substring(0, 400);
         // body.description = `
         //     # Prompt
         //     ${data.prompt}
