@@ -43,9 +43,9 @@ export async function lyrics(ctx: Context<{ Bindings: Env }>) {
         if (response && response.lyrics && response.title) {
             return ctx.json({
                 title: response.title,
+                service: "tommy-ni1997",
                 lyrics: response.lyrics,
                 style: response.style ? response.style.split(',').map((s: string) => s.trim()) : [],
-                service: "tommy-ni1997",
             } as UnifiedLyricsResponse);
         }
     } catch (error) {
@@ -59,9 +59,9 @@ export async function lyrics(ctx: Context<{ Bindings: Env }>) {
         if (sunoResponse.status === 'complete' && sunoResponse.text && sunoResponse.title) {
             return ctx.json({
                 title: sunoResponse.title,
+                service: "suno",
                 lyrics: sunoResponse.text,
                 style: sunoResponse.tags || [],
-                service: "suno",
             } as UnifiedLyricsResponse);
         }
     } catch (error) {
@@ -85,9 +85,9 @@ export async function lyrics(ctx: Context<{ Bindings: Env }>) {
         if (response && response.lyrics && response.title) {
             return ctx.json({
                 title: response.title,
+                service: "aisonggenerator.io",
                 lyrics: response.lyrics,
                 style: response.tags ? response.tags.split(',').map((s: string) => s.trim()) : (response.style ? response.style.split(',').map((s: string) => s.trim()) : []),
-                service: "aisonggenerator.io",
             } as UnifiedLyricsResponse);
         }
     } catch (error) {
@@ -116,9 +116,9 @@ export async function lyrics(ctx: Context<{ Bindings: Env }>) {
             if (parsedCfResponse.title && parsedCfResponse.lyrics && Array.isArray(parsedCfResponse.style)) {
                 return ctx.json({
                     title: parsedCfResponse.title.trim(),
+                    service: "cloudflare-ai",
                     lyrics: parsedCfResponse.lyrics.trim(),
                     style: parsedCfResponse.style,
-                    service: "cloudflare-ai",
                 } as UnifiedLyricsResponse);
             }
         }

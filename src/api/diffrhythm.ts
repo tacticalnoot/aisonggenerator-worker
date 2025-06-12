@@ -208,6 +208,10 @@ export async function getDiffRhythmSongResults(uids: string[], env: Env, userId?
 
     const transformedSongs: TransformedSong[] = [];
 
+    // TODO I've seen an instance (637486bbf7294cfcbc378444ba63cb3f) where the data[work.status] was 9 due to the name Taylor 
+    // might be able to capture that and throw early and pass a status -1 here
+    // `0` I think is in process, `1` is success and likely anything above that is some type of error
+
     for (const work of result.data) {
         if (work.output_audio_url && work.output_audio_url.length > 0) {
             for (const audioUrl of work.output_audio_url) {
