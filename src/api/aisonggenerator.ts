@@ -177,18 +177,23 @@ export async function getAiSongGeneratorSongResults(
         })
     );
 
-    // Filter out null responses and transform to AiSongGeneratorSong format
+    // Transform responses maintaining input order (taskIds order)
     // Note: audio can be null or empty string during progressive generation - normalize to null
-    const results: AiSongGeneratorSong[] = responses
-        .filter((data): data is GetStatusData => data !== null)
-        .map((data) => ({
-            music_id: data.music_id,
-            status: data.status,
-            // Handle progressive generation: null, empty string "", or URL - normalize empty/null to null
-            audio: (data.audio && typeof data.audio === 'string' && data.audio.trim() !== '') ? data.audio : null,
-            identify_id: data.identify_id,
-            service: 'aisonggenerator' as const
-        }));
+    const results: AiSongGeneratorSong[] = [];
+
+    for (let i = 0; i < taskIds.length; i++) {
+        const data = responses[i];
+        if (data !== null) {
+            results.push({
+                music_id: data.music_id,
+                status: data.status,
+                // Handle progressive generation: null, empty string "", or URL - normalize empty/null to null
+                audio: (data.audio && typeof data.audio === 'string' && data.audio.trim() !== '') ? data.audio : null,
+                identify_id: data.identify_id,
+                service: 'aisonggenerator' as const
+            });
+        }
+    }
 
     return results;
 } 

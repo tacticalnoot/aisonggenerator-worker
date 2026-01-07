@@ -202,18 +202,19 @@ export async function getDiffRhythmSongResults(uids: string[], env: Env, userId?
         return [];
     }
 
-    const transformedSongs: TransformedSong[] = [];
-
     // Diffrhythm status codes:
     // 0 = processing (no audio), 1 = complete (has audio), >1 = error (e.g., 9 for content policy)
     // Maps to workflow status: 0 (waiting) or 4 (complete) to align with aisonggenerator's status codes
+
+    // Build a map of uid -> transformed song for O(1) lookup
+    const songMap = new Map<string, TransformedSong>();
 
     for (const work of result) {
         if (work.audio_url) {
             // Always use work.uid as music_id for consistency - it's stable across the entire lifecycle
             // The audio filename extracted from URL was previously used here but caused ID changes
             // between polling calls (uid during processing → filename after completion)
-            transformedSongs.push({
+            songMap.set(work.uid, {
                 music_id: work.uid,
                 status: 4, // Status 4 if audio URL exists
                 audio: work.audio_url,
@@ -222,7 +223,7 @@ export async function getDiffRhythmSongResults(uids: string[], env: Env, userId?
         } else if (work.status === 0 || work.status === 1) {
             // Status 0 = processing (normal case)
             // Status 1 without audio = edge case safety net (shouldn't normally happen)
-            transformedSongs.push({
+            songMap.set(work.uid, {
                 music_id: work.uid,
                 status: 0,
                 audio: null,
@@ -230,12 +231,21 @@ export async function getDiffRhythmSongResults(uids: string[], env: Env, userId?
             });
         } else if (work.status > 1) {
             // Error status (e.g., 9 for content policy violation)
-            transformedSongs.push({
+            songMap.set(work.uid, {
                 music_id: work.uid,
                 status: -1,
                 audio: null,
                 service: 'diffrhythm' as const,
             });
+        }
+    }
+
+    // Return songs in the same order as input uids to guarantee consistent ordering
+    const transformedSongs: TransformedSong[] = [];
+    for (const uid of uids) {
+        const song = songMap.get(uid);
+        if (song) {
+            transformedSongs.push(song);
         }
     }
 
