@@ -204,7 +204,9 @@ export async function getDiffRhythmSongResults(uids: string[], env: Env, userId?
 
     const transformedSongs: TransformedSong[] = [];
 
-    // status 0 = in process, 1 = success, anything else (e.g., 9) is likely an error
+    // Diffrhythm status codes:
+    // 0 = processing (no audio), 1 = complete (has audio), >1 = error (e.g., 9 for content policy)
+    // Maps to workflow status: 0 (waiting) or 4 (complete) to align with aisonggenerator's status codes
 
     for (const work of result) {
         if (work.audio_url) {
@@ -217,8 +219,9 @@ export async function getDiffRhythmSongResults(uids: string[], env: Env, userId?
                 audio: work.audio_url,
                 service: 'diffrhythm' as const,
             });
-        } else if (work.status === 0) {
-            // Still processing
+        } else if (work.status === 0 || work.status === 1) {
+            // Status 0 = processing (normal case)
+            // Status 1 without audio = edge case safety net (shouldn't normally happen)
             transformedSongs.push({
                 music_id: work.uid,
                 status: 0,
