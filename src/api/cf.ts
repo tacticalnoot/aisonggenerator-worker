@@ -3,7 +3,7 @@ export async function songWrite(env: Env, prompt: string) {
         {
             role: "system", content: `You are a creative song writer.
 
-Your task is to write a song based on a user prompt.
+Your task is to write a song based on a user prompt. and a description of an image which the prompt generated. In the image description, avoid explicitly mentioning instruments and instead try to tell a  story of the image from the lyrics and other data.
 
 CRITICAL INSTRUCTION: The FIRST item in the "style" array MUST be a vocal tag.
 * If the user explicitly requests vocal gender, use exactly: "Male Vocals" or "Female Vocals".
