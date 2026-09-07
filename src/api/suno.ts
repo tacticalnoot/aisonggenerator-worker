@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 
-const CLERK_TOKEN_URL = "https://clerk.suno.com/v1/client/sessions/sess_2xSAFw8ETkY7LedHzLUfnp15K6o/tokens?_is_native=true&_clerk_js_version=5.67.2&__clerk_api_version=2025-04-10";
+const CLERK_TOKEN_URL = "https://clerk.suno.com/v1/client/sessions/session_8550cc1726a3a8c7910c20/tokens?_clerk_js_version=5.117.0&__clerk_api_version=2025-11-10";
 const LYRICS_API_BASE_URL = "https://studio-api.prod.suno.com/api";
 
 interface ClerkTokenResponse {
@@ -25,7 +25,7 @@ export async function getClerkToken(): Promise<string> {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${env.SUNO_SESSION_TOKEN}`,
+            'Cookie': `__client=${env.SUNO_SESSION_TOKEN};`
         },
     });
     if (!response.ok) {
