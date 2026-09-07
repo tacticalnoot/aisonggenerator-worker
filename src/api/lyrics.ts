@@ -21,7 +21,7 @@ const lyricsServices: LyricsService[] = [
     {
         name: "aisonggenerator.io",
         fetch: async (prompt, _requestBody, env) => {
-            const res = await fetch('https://aisonggenerator.io/api/lyrics-generate', {
+            const res = await fetch('https://aisonggenerator.io/api/features/lyrics-generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -66,33 +66,33 @@ const lyricsServices: LyricsService[] = [
         name: "cloudflare-ai",
         fetch: async (prompt, _requestBody, env) => {
             const cfApiResponse = await songWrite(env, prompt || "");
-            if (!cfApiResponse || typeof (cfApiResponse as any).response !== 'string') {
-                throw new Error("Cloudflare AI returned invalid response type");
+            const response = (cfApiResponse as any)?.response;
+            if (!response) {
+                throw new Error("Cloudflare AI returned empty response");
             }
-            const cfAiOutput = cfApiResponse as { response: string };
-            let parsedCfResponse: any;
-            try {
-                parsedCfResponse = JSON.parse(
-                    cfAiOutput.response.replace(
-                        /"lyrics":\s*"(.*?)"(?=,|"style")/s,
-                        (_, lyrics) => {
-                            const escaped = lyrics
-                                .replace(/\\/g, '\\\\')
-                                .replace(/"/g, '\\"')
-                                .replace(/\r?\n/g, '\\n');
-                            return `"lyrics": "${escaped}"`;
-                        }
-                    )
-                );
-            } catch (parseErr) {
-                throw new Error(`Failed to parse Cloudflare AI response: ${cfAiOutput.response.substring(0, 200)}`);
+
+            // JSON mode returns a parsed object directly; fall back to string parsing
+            let parsed: any;
+            if (typeof response === 'object') {
+                parsed = response;
+            } else if (typeof response === 'string') {
+                // Strip markdown code fences if present
+                const cleaned = response.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+                try {
+                    parsed = JSON.parse(cleaned);
+                } catch {
+                    throw new Error(`Failed to parse Cloudflare AI response: ${cleaned.substring(0, 200)}`);
+                }
+            } else {
+                throw new Error("Cloudflare AI returned unexpected response type");
             }
-            if (parsedCfResponse.title && parsedCfResponse.lyrics && Array.isArray(parsedCfResponse.style)) {
+
+            if (parsed.title && parsed.lyrics && Array.isArray(parsed.style)) {
                 return {
-                    title: parsedCfResponse.title.trim(),
+                    title: parsed.title.trim(),
                     service: "cloudflare-ai",
-                    lyrics: parsedCfResponse.lyrics.trim(),
-                    style: parsedCfResponse.style,
+                    lyrics: parsed.lyrics.trim(),
+                    style: parsed.style,
                 };
             }
             throw new Error("Cloudflare AI response missing title, lyrics, or style array");

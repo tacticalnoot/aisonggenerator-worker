@@ -65,12 +65,27 @@ You MUST format your response as a valid JSON object strictly adhering to this f
         },
     ];
 
-    // @cf/meta/llama-4-scout-17b-16e-instruct
-    // @cf/mistralai/mistral-small-3.1-24b-instruct
-    // https://chatgpt.com/share/682fdc8b-83c0-800f-b010-0c86a5b4b9ac
+    // Preserve the fork's richer prompt while adopting kalepail upstream's structured-output runtime contract.
     return env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
         messages,
-        max_tokens: 512,
-        temperature: 0.7,
+        max_tokens: 1024,
+        temperature: 0.8,
+        frequency_penalty: 0.3,
+        presence_penalty: 0.2,
+        response_format: {
+            type: "json_schema",
+            json_schema: {
+                type: "object",
+                properties: {
+                    title: { type: "string" },
+                    lyrics: { type: "string" },
+                    style: {
+                        type: "array",
+                        items: { type: "string" },
+                    },
+                },
+                required: ["title", "lyrics", "style"],
+            },
+        },
     });
 }
