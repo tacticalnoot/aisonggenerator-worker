@@ -62,7 +62,7 @@ export async function generateAiSongGeneratorSong(
         title: params.title,
         styles: params.styles.join(', '),
         type: "lyrics",
-        model: "v3.0",
+        model: "v4.0",
         user_id: env.AISONGGENERATOR_USER_ID,
         is_private: !params.isPublic, // Invert isPublic for is_private
     };
@@ -152,7 +152,7 @@ export async function getAiSongGeneratorSongResults(
     const responses = await Promise.all(
         taskIds.map(async (id) => {
             const response = await fetch(
-                `https://aisonggenerator.io/api/musicLibrary/getStatus?musicId=${id}`,
+                `https://aisonggenerator.io/api/music-library/get-status?musicId=${id}`,
                 {
                     method: 'GET',
                     headers: {
@@ -192,8 +192,16 @@ export async function getAiSongGeneratorSongResults(
                 identify_id: data.identify_id,
                 service: 'aisonggenerator' as const
             });
+        } else {
+            results.push({
+                music_id: String(taskIds[i]),
+                status: 0,
+                audio: null,
+                identify_id: String(taskIds[i]),
+                service: 'aisonggenerator' as const
+            });
         }
     }
 
     return results;
-} 
+}
